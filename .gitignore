@@ -5,3 +5,4 @@
 /NÁLISE E PROJETO DE SISTEMAS
 /node_modules
 package-lock.json
+.env
