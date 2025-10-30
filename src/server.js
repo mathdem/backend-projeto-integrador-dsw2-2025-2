@@ -54,8 +54,8 @@ app.get("/", (_req, res) => {
         const endpoints = {
             "LISTAR_TODAS": "GET /api/artes",
             "BUSCAR_POR_ID": "GET /api/artes/:id",
-            "CRIAR": "POST /api/artes BODY: { \"Usuarios_id\": number, \"urlImagem\": \"string\", \"nome\": \"string\", \"descricao\": \"string\", \"palavrasChave\": \"string\" }",
-            "SUBSTITUIR_COMPLETAMENTE": "PUT /api/artes/:id BODY: { \"Usuarios_id\": number, \"urlImagem\": \"string\", \"nome\": \"string\", \"descricao\": \"string\", \"palavrasChave\": \"string\" }",
+            "CRIAR": "POST /api/artes BODY: { \"Usuarios_id\": number, \"url_imagem\": \"string\", \"nome\": \"string\", \"descricao\": \"string\", \"palavras_chave\": \"string\" }",
+            "SUBSTITUIR_COMPLETAMENTE": "PUT /api/artes/:id BODY: { \"Usuarios_id\": number, \"url_imagem\": \"string\", \"nome\": \"string\", \"descricao\": \"string\", \"palavras_chave\": \"string\" }",
             "ATUALIZAR_PARCIALMENTE": "PATCH /api/artes/:id BODY: { /* envie apenas os campos que deseja alterar */ }",
             "DELETAR": "DELETE /api/artes/:id",
         };
@@ -76,7 +76,7 @@ app.get("/api/artes", async (_req, res) => {
     try {
         // A desestruturação { rows } extrai diretamente o array de resultados do
         // objeto que o pool.query retorna.
-        const { rows } = await pool.query("SELECT * FROM artes ORDER BY id DESC");
+        const { rows } = await pool.query(`SELECT * FROM "Artes" ORDER BY "id" DESC`);
         res.status(200).json(rows); // Retorna um array de objetos.
     } catch (error) {
         res.status(500).json({ erro: "Erro interno no servidor." });
@@ -98,7 +98,7 @@ app.get("/api/artes/:id", async (req, res) => {
 
     try {
         // Usamos uma query parametrizada para segurança: $1 é substituído pelo `id`.
-        const { rows } = await pool.query("SELECT * FROM artes WHERE id = $1", [id]);
+        const { rows } = await pool.query(`SELECT * FROM "Artes" WHERE "id" = $1`, [id]);
 
         // Se o array `rows` estiver vazio, o ID não foi encontrado no banco.
         if (rows.length === 0) {
@@ -119,17 +119,17 @@ app.get("/api/artes/:id", async (req, res) => {
 app.post("/api/artes", async (req, res) => {
     // `req.body ?? {}` garante que, se o body for nulo, teremos um objeto vazio,
     // evitando erros ao tentar desestruturar `undefined`.
-    const { Usuarios_id, urlImagem, nome, descricao, palavrasChave } = req.body ?? {};
+    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave } = req.body ?? {};
     const uid = Number(Usuarios_id); // Converte o ID do usuário para número.
 
     // Validação dos campos obrigatórios.
-    if (!urlImagem || typeof urlImagem !== "string" ||
+    if (!url_imagem || typeof url_imagem !== "string" ||
         !nome || typeof nome !== "string" ||
         !descricao || typeof descricao !== "string" ||
-        !palavrasChave || typeof palavrasChave !== "string" ||
+        !palavras_chave || typeof palavras_chave !== "string" ||
         !Number.isInteger(uid) || uid <= 0) {
         return res.status(400).json({
-            erro: "Dados inválidos. Os campos 'urlImagem', 'nome', 'descricao' e 'palavrasChave' são strings obrigatórias. 'Usuarios_id' deve ser um número inteiro positivo."
+            erro: "Dados inválidos. Os campos 'url_imagem', 'nome', 'descricao' e 'palavras_chave' são strings obrigatórias. 'Usuarios_id' deve ser um número inteiro positivo."
         });
     }
 
@@ -137,8 +137,8 @@ app.post("/api/artes", async (req, res) => {
         // A cláusula `RETURNING *` faz com que o PostgreSQL retorne a linha
         // completa que acabou de ser inserida, incluindo o ID gerado.
         const { rows } = await pool.query(
-            "INSERT INTO artes (Usuarios_id, urlImagem, nome, descricao, palavrasChave) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-            [uid, urlImagem, nome, descricao, palavrasChave]
+            `INSERT INTO "Artes" ("Usuarios_id", "url_imagem", "nome", "descricao", "palavras_chave") VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [uid, url_imagem, nome, descricao, palavras_chave]
         );
 
         // Retorna o objeto recém-criado com status 201 Created.
@@ -155,7 +155,7 @@ app.post("/api/artes", async (req, res) => {
 // O método PUT espera que o cliente envie todos os campos do recurso.
 app.put("/api/artes/:id", async (req, res) => {
     const id = Number(req.params.id);
-    const { Usuarios_id, urlImagem, nome, descricao, palavrasChave } = req.body ?? {};
+    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave } = req.body ?? {};
     const uid = Number(Usuarios_id);
 
     if (!Number.isInteger(id) || id <= 0) {
@@ -163,27 +163,27 @@ app.put("/api/artes/:id", async (req, res) => {
     }
 
     // A validação para PUT é igual à do POST, pois todos os campos são necessários.
-    if (!urlImagem || typeof urlImagem !== "string" ||
+    if (!url_imagem || typeof url_imagem !== "string" ||
         !nome || typeof nome !== "string" ||
         !descricao || typeof descricao !== "string" ||
-        !palavrasChave || typeof palavrasChave !== "string" ||
+        !palavras_chave || typeof palavras_chave !== "string" ||
         !Number.isInteger(uid) || uid <= 0) {
         return res.status(400).json({
-            erro: "Corpo da requisição inválido. Para o método PUT, todos os campos são obrigatórios: 'urlImagem', 'nome', 'descricao', 'palavrasChave' (strings) e 'Usuarios_id' (inteiro positivo)."
+            erro: "Corpo da requisição inválido. Para o método PUT, todos os campos são obrigatórios: 'url_imagem', 'nome', 'descricao', 'palavras_chave' (strings) e 'Usuarios_id' (inteiro positivo)."
         });
     }
 
     try {
         const { rows } = await pool.query(
-            `UPDATE artes SET 
-                Usuarios_id = $1, 
-                urlImagem = $2,
-                nome = $3, 
-                descricao = $4, 
-                palavrasChave = $5
-             WHERE id = $6 
+            `UPDATE "Artes" SET 
+                "Usuarios_id" = $1, 
+                "url_imagem" = $2,
+                "nome" = $3, 
+                "descricao" = $4, 
+                "palavras_chave" = $5
+             WHERE "id" = $6 
              RETURNING *`,
-            [uid, urlImagem, nome, descricao, palavrasChave, id]
+            [uid, url_imagem, nome, descricao, palavras_chave, id]
         );
 
         // Se `rows` está vazio, o `id` fornecido não corresponde a nenhum registro.
@@ -210,15 +210,15 @@ app.put("/api/artes/:id", async (req, res) => {
 //   e, por isso, manterá o valor que já estava na coluna `nome`.
 app.patch("/api/artes/:id", async (req, res) => {
     const id = Number(req.params.id);
-    const { Usuarios_id, urlImagem, nome, descricao, palavrasChave } = req.body ?? {};
+    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave } = req.body ?? {};
 
     if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({ erro: "ID inválido. Deve ser um número inteiro positivo." });
     }
 
     // Verifica se pelo menos um campo foi enviado para atualização.
-    if (Usuarios_id === undefined && urlImagem === undefined && nome === undefined &&
-        descricao === undefined && palavrasChave === undefined) {
+    if (Usuarios_id === undefined && url_imagem === undefined && nome === undefined &&
+        descricao === undefined && palavras_chave === undefined) {
         return res.status(400).json({ erro: "Nenhum campo foi enviado para atualização." });
     }
 
@@ -232,16 +232,16 @@ app.patch("/api/artes/:id", async (req, res) => {
     
     try {
         const { rows } = await pool.query(
-            `UPDATE artes SET 
-                Usuarios_id = COALESCE($1, Usuarios_id), 
-                urlImagem = COALESCE($2, urlImagem), 
-                nome = COALESCE($3, nome), 
-                descricao = COALESCE($4, descricao), 
-                palavrasChave = COALESCE($5, palavrasChave)
-             WHERE id = $6 
+            `UPDATE "Artes" SET 
+                "Usuarios_id" = COALESCE($1, "Usuarios_id"), 
+                "url_imagem" = COALESCE($2, "url_imagem"), 
+                "nome" = COALESCE($3, "nome"), 
+                "descricao" = COALESCE($4, "descricao"), 
+                "palavras_chave" = COALESCE($5, "palavras_chave")
+             WHERE "id" = $6 
              RETURNING *`,
             // Se um valor for `undefined`, o operador `??` o converte para `null`.
-            [Usuarios_id ?? null, urlImagem ?? null, nome ?? null, descricao ?? null, palavrasChave ?? null, id]
+            [Usuarios_id ?? null, url_imagem ?? null, nome ?? null, descricao ?? null, palavras_chave ?? null, id]
         );
 
         if (rows.length === 0) {
@@ -266,7 +266,7 @@ app.delete("/api/artes/:id", async (req, res) => {
 
     try {
         // `rowCount` informa quantas linhas foram afetadas pela operação.
-        const result = await pool.query("DELETE FROM artes WHERE id = $1", [id]);
+        const result = await pool.query(`DELETE FROM "Artes" WHERE "id" = $1`, [id]);
 
         // Se nenhuma linha foi afetada, significa que o `id` não foi encontrado.
         if (result.rowCount === 0) {
