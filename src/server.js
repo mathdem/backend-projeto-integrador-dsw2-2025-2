@@ -36,12 +36,14 @@
 // IMPORTAÇÕES E CONFIGURAÇÃO INICIAL
 // -----------------------------------------------------------------------------
 import express from "express";
+import cors from "cors";
 import { pool } from "./db.js"; // "pool" gerencia as conexões com o PostgreSQL.
 
 const app = express();
 
 // Middleware para que o Express entenda JSON no corpo das requisições.
 // Sem ele, req.body seria `undefined`.
+app.use(cors());
 app.use(express.json());
 
 // -----------------------------------------------------------------------------
