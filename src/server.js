@@ -121,17 +121,36 @@ app.get("/api/artes/:id", async (req, res) => {
 app.post("/api/artes", async (req, res) => {
     // `req.body ?? {}` garante que, se o body for nulo, teremos um objeto vazio,
     // evitando erros ao tentar desestruturar `undefined`.
-    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave } = req.body ?? {};
+    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave, data_concepcao } = req.body ?? {};
     const uid = Number(Usuarios_id); // Converte o ID do usuário para número.
 
+    console.log("Usuarios_id", Usuarios_id);
+    console.log("url_imagem", url_imagem);
+    console.log("nome", nome);
+    console.log("descricao", descricao);
+    console.log("palavras_chave", palavras_chave);
+    console.log("req.body", req.body);
+
     // Validação dos campos obrigatórios.
-    if (!url_imagem || typeof url_imagem !== "string" ||
-        !nome || typeof nome !== "string" ||
-        !descricao || typeof descricao !== "string" ||
-        !palavras_chave || typeof palavras_chave !== "string" ||
+    if (url_imagem == null ||
+        nome == null ||
         !Number.isInteger(uid) || uid <= 0) {
+
         return res.status(400).json({
-            erro: "Dados inválidos. Os campos 'url_imagem', 'nome', 'descricao' e 'palavras_chave' são strings obrigatórias. 'Usuarios_id' deve ser um número inteiro positivo."
+            erro: "Dados inválidos. Os campos 'url_imagem', 'nome' e 'Usuarios_id' são obrigatórios. 'Usuarios_id' deve ser um número inteiro positivo."
+        });
+    }
+
+    // 2. Validação de TIPO de todos os campos string (obrigatórios + opcionais)
+    // Se um campo opcional existe (não é null/undefined), ele também deve ser string.
+    if (typeof url_imagem !== "string" ||
+        typeof nome !== "string" ||
+        (descricao != null && typeof descricao !== "string") ||
+        (palavras_chave != null && typeof palavras_chave !== "string") ||
+        (data_concepcao != null && typeof data_concepcao !== "string")) {
+
+        return res.status(400).json({
+            erro: "Dados inválidos. Todos os campos textuais (url_imagem, nome, descricao, etc.), se fornecidos, devem ser do tipo string."
         });
     }
 
@@ -139,8 +158,8 @@ app.post("/api/artes", async (req, res) => {
         // A cláusula `RETURNING *` faz com que o PostgreSQL retorne a linha
         // completa que acabou de ser inserida, incluindo o ID gerado.
         const { rows } = await pool.query(
-            `INSERT INTO "Artes" ("Usuarios_id", "url_imagem", "nome", "descricao", "palavras_chave") VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [uid, url_imagem, nome, descricao, palavras_chave]
+            `INSERT INTO "Artes" ("Usuarios_id", "url_imagem", "nome", "descricao", "palavras_chave", "data_concepcao") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [uid, url_imagem, nome, descricao, palavras_chave, data_concepcao]
         );
 
         // Retorna o objeto recém-criado com status 201 Created.
@@ -231,7 +250,7 @@ app.patch("/api/artes/:id", async (req, res) => {
             return res.status(400).json({ erro: "Se fornecido, 'Usuarios_id' deve ser um número inteiro positivo." });
         }
     }
-    
+
     try {
         const { rows } = await pool.query(
             `UPDATE "Artes" SET 

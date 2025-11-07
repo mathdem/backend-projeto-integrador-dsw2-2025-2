@@ -18,6 +18,7 @@ CREATE TABLE "Artes" (
     "nome" VARCHAR(255) NOT NULL,
     "descricao" TEXT,
     "palavras_chave" TEXT,
+    "data_concepcao"  VARCHAR(255),
     "data_criacao" TIMESTAMP NOT NULL DEFAULT NOW(),
     "data_atualizacao" TIMESTAMP NOT NULL DEFAULT NOW()
 );
