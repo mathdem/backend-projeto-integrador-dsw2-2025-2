@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use ("/api/usuarios", usuariosRoutes)
-app.use ("/api/artes", authMiddleware, artesRoutes)
+app.use ("/api/artes", artesRoutes)
 
 
 const PORT = process.env.PORT || 3000;
