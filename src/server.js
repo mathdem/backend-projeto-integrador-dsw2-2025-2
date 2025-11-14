@@ -37,7 +37,7 @@
 // -----------------------------------------------------------------------------
 import express from "express";
 import cors from "cors";
-import { pool } from "./db.js"; // "pool" gerencia as conexões com o PostgreSQL.
+import { pool } from "./database/db.js"; // "pool" gerencia as conexões com o PostgreSQL.
 
 const app = express();
 
