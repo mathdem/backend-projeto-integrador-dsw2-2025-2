@@ -187,11 +187,13 @@ router.post("/logout", async (req, res) => {
     return res.status(204).end();
 });
 
+// ATUALIZAR USUÁRIO (requer login)
+// Modificado para tornar a senha opcional
 router.put("/:id", authMiddleware, async (req, res) => {
     const id = Number(req.params.id);
-    const { nome, email, senha } = req.body;
+    const { nome, email, senha } = req.body ?? {};
     const uid = req.user.id;
-    const isAdmin = req.user.papel === 1;
+    const isAdmin = req.user.papel === 0;
 
     // Regra de segurança: só o próprio usuário ou admin pode alterar
     if (uid !== id && !isAdmin) {
@@ -199,24 +201,29 @@ router.put("/:id", authMiddleware, async (req, res) => {
     }
 
     try {
-        // Se enviou senha, faz hash. Se não, ignora.
-        let senhaQueryPart = "";
-        const params = [nome, email, id];
-        let paramIndex = 4;
+        // Lógica para senha opcional
+        let query = "";
+        let params = [];
 
-        if (senha && senha.length >= 6) {
+        if (senha && senha.trim().length >= 6) {
+            // Se a senha foi fornecida e é válida, atualiza tudo
             const senha_hash = await bcrypt.hash(senha, 12);
-            params.push(senha_hash);
-            senhaQueryPart = `, "senha_hash" = $${paramIndex - 1}`;
+            query = `UPDATE "Usuarios"
+                     SET "nome" = $1, "email" = $2, "senha_hash" = $3, "data_atualizacao" = now()
+                     WHERE "id" = $4
+                     RETURNING "id", "nome", "email", "papel"`;
+            params = [nome, email, senha_hash, id];
+        } else {
+            // Se a senha NÃO foi fornecida (ou é vazia), atualiza apenas nome e email
+            // Mantém a senha antiga
+            query = `UPDATE "Usuarios"
+                     SET "nome" = $1, "email" = $2, "data_atualizacao" = now()
+                     WHERE "id" = $3
+                     RETURNING "id", "nome", "email", "papel"`;
+            params = [nome, email, id];
         }
 
-        const { rows } = await pool.query(
-            `UPDATE "Usuarios"
-             SET "nome" = $1, "email" = $2 ${senhaQueryPart}, "data_atualizacao" = now()
-             WHERE "id" = $3
-             RETURNING "id", "nome", "email", "papel"`,
-            params
-        );
+        const { rows } = await pool.query(query, params);
 
         if (!rows[0]) return res.status(404).json({ erro: "usuário não encontrado" });
         res.json(rows[0]);
@@ -238,7 +245,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
     try {
         // Remove primeiro os chamados dependentes (ou configure CASCADE no banco)
-        await pool.query(`DELETE FROM "Chamados" WHERE "Usuarios_id" = $1`, [id]);
+        await pool.query(`DELETE FROM "Artes" WHERE "Usuarios_id" = $1`, [id]);
 
         const { rowCount } = await pool.query(`DELETE FROM "Usuarios" WHERE "id" = $1`, [id]);
 
