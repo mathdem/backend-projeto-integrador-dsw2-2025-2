@@ -135,7 +135,7 @@ router.post("/refresh", async (req, res) => {
         clearRefreshCookie(res, req);
         return res.status(401).json({ erro: "refresh inválido ou expirado" });
     }
-});
+});-
 
 router.post("/register", async (req, res) => {
     // Cadastro simples:
