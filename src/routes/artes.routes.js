@@ -70,11 +70,13 @@ router.get("/:id", async (req, res) => {
 // Objetivo: Inserir um novo registro na tabela "artes".
 
 //POST api/artes/
-router.post("/", async (req, res) => {
+router.post("/", upload.single("imagem"),async (req, res) => {
     // `req.body ?? {}` garante que, se o body for nulo, teremos um objeto vazio,
     // evitando erros ao tentar desestruturar `undefined`.
-    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave, data_concepcao } = req.body ?? {};
+    const { Usuarios_id, nome, descricao, palavras_chave, data_concepcao } = req.body ?? {};
     const uid = Number(Usuarios_id); // Converte o ID do usuário para número.
+
+    const url_imagem = req.file ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : null;
 
     console.log("Usuarios_id", Usuarios_id);
     console.log("url_imagem", url_imagem);
@@ -83,6 +85,7 @@ router.post("/", async (req, res) => {
     console.log("palavras_chave", palavras_chave);
     console.log("req.body", req.body);
 
+    
     // Validação dos campos obrigatórios.
     if (url_imagem == null ||
         nome == null ||
@@ -133,6 +136,7 @@ router.put("/:id", async (req, res) => {
     const { Usuarios_id, url_imagem, nome, descricao, palavras_chave } = req.body ?? {};
     const uid = Number(Usuarios_id);
 
+    
     if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({ erro: "ID de rota inválido. Deve ser um número inteiro positivo." });
     }
