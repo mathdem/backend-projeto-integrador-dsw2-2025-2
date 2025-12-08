@@ -70,20 +70,15 @@ router.get("/:id", async (req, res) => {
 // Objetivo: Inserir um novo registro na tabela "artes".
 
 //POST api/artes/
-router.post("/", upload.single("imagem"),async (req, res) => {
+router.post("/", upload.single("url_imagem"),async (req, res) => {
     // `req.body ?? {}` garante que, se o body for nulo, teremos um objeto vazio,
     // evitando erros ao tentar desestruturar `undefined`.
     const { Usuarios_id, nome, descricao, palavras_chave, data_concepcao } = req.body ?? {};
+    
     const uid = Number(Usuarios_id); // Converte o ID do usuário para número.
 
     const url_imagem = req.file ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : null;
 
-    console.log("Usuarios_id", Usuarios_id);
-    console.log("url_imagem", url_imagem);
-    console.log("nome", nome);
-    console.log("descricao", descricao);
-    console.log("palavras_chave", palavras_chave);
-    console.log("req.body", req.body);
 
     
     // Validação dos campos obrigatórios.
@@ -113,7 +108,7 @@ router.post("/", upload.single("imagem"),async (req, res) => {
         // A cláusula `RETURNING *` faz com que o PostgreSQL retorne a linha
         // completa que acabou de ser inserida, incluindo o ID gerado.
         const { rows } = await pool.query(
-            `INSERT INTO "Artes" ("Usuarios_id", "url_imagem", "nome", "descricao", "palavras_chave", "data_concepcao") VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            `INSERT INTO "Artes" ("Usuarios_id", "url_imagem", "nome", "descricao", "palavras_chave", "data_concepcao",) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
             [uid, url_imagem, nome, descricao, palavras_chave, data_concepcao]
         );
 
@@ -131,12 +126,13 @@ router.post("/", upload.single("imagem"),async (req, res) => {
 // O método PUT espera que o cliente envie todos os campos do recurso.
 
 //PUT /api/artes/:id
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.single("url_imagem"),async (req, res) => {
     const id = Number(req.params.id);
-    const { Usuarios_id, url_imagem, nome, descricao, palavras_chave } = req.body ?? {};
+    const { Usuarios_id, nome, descricao, palavras_chave } = req.body ?? {};
     const uid = Number(Usuarios_id);
 
-    
+    const url_imagem = req.file ? `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}` : null;
+
     if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({ erro: "ID de rota inválido. Deve ser um número inteiro positivo." });
     }
